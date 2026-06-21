@@ -52,7 +52,6 @@ public class RetrainDialogDelegate {
                 public Object invoke(Object proxy, java.lang.reflect.Method method, Object[] args) throws Throwable {
                     if (method.getName().equals("actionPerformed")) {
                         action.run();
-                        dismissDialog();
                     }
                     return null;
                 }
