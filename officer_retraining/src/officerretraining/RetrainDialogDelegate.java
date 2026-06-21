@@ -65,8 +65,8 @@ public class RetrainDialogDelegate {
     }
 
     public void createCustomDialog(UIPanelAPI innerPanel) {
-        float width = 400f;
-        float height = 350f;
+        float width = 600f;
+        float height = 300f;
 
         CustomPanelAPI panel = Global.getSettings().createCustom(width, height, null);
         TooltipMakerAPI info = panel.createUIElement(width, height, true);
@@ -92,7 +92,7 @@ public class RetrainDialogDelegate {
             info.addPara("Story Points: Free", 0f, Misc.getStoryOptionColor(), "Free");
         }
         
-        info.addSpacer(10f);
+        info.addSpacer(20f);
 
         String[] personalities = {"timid", "cautious", "steady", "aggressive", "reckless"};
         String[] displayNames = {"Timid", "Cautious", "Steady", "Aggressive", "Reckless"};
@@ -100,16 +100,26 @@ public class RetrainDialogDelegate {
         final boolean canAfford = Global.getSector().getPlayerFleet().getCargo().getCredits().get() >= creditsCost && 
                                   Global.getSector().getPlayerStats().getStoryPoints() >= spCost;
 
+        float btnWidth = 110f;
+        float btnHeight = 30f;
+        float padding = 5f;
+        float totalWidth = (btnWidth * personalities.length) + (padding * (personalities.length - 1));
+        float startX = (width - totalWidth) / 2f;
+
+        CustomPanelAPI rowPanel = Global.getSettings().createCustom(width, 60f, null);
+        
         for (int i = 0; i < personalities.length; i++) {
             final String pId = personalities[i];
             String pName = displayNames[i];
 
             boolean isCurrent = officer.getPersonalityAPI().getId().equals(pId);
-            ButtonAPI btn = info.addButton(pName, pId, width - 20f, 30f, 5f);
+            
+            TooltipMakerAPI cell = rowPanel.createUIElement(btnWidth, 60f, false);
+            ButtonAPI btn = cell.addButton(pName, pId, btnWidth, btnHeight, 0f);
             
             if (isCurrent) {
                 btn.setEnabled(false);
-                info.addPara("Already has this personality.", Misc.getGrayColor(), 0f);
+                cell.addPara("Current", Misc.getGrayColor(), 0f).setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
             } else if (!canAfford) {
                 btn.setEnabled(false);
             } else {
@@ -126,14 +136,22 @@ public class RetrainDialogDelegate {
                     }
                 });
             }
+            rowPanel.addUIElement(cell).inTL(startX + (i * (btnWidth + padding)), 0f);
         }
 
+        info.addCustom(rowPanel, 0f);
+        
         info.addSpacer(20f);
-        ButtonAPI cancelBtn = info.addButton("Cancel", "cancel", width - 20f, 30f, 5f);
+        
+        CustomPanelAPI cancelRow = Global.getSettings().createCustom(width, 30f, null);
+        TooltipMakerAPI cancelCell = cancelRow.createUIElement(100f, 30f, false);
+        ButtonAPI cancelBtn = cancelCell.addButton("Cancel", "cancel", 100f, 30f, 0f);
         attachListener(cancelBtn, new Runnable() {
             @Override
-            public void run() {} // Just dismisses
+            public void run() {} 
         });
+        cancelRow.addUIElement(cancelCell).inTL((width - 100f) / 2f, 0f);
+        info.addCustom(cancelRow, 0f);
 
         panel.addUIElement(info).inTL(0, 0);
         innerPanel.addComponent(panel).inTL(0, 0);
