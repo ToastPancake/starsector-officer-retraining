@@ -63,6 +63,11 @@ public class OfficerRetrainingPlugin extends BaseModPlugin {
                 return c;
             }
             if (name.startsWith("officerretraining.")) {
+                if (name.equals("officerretraining.Settings") || 
+                    name.equals("officerretraining.LunaWrapper") || 
+                    name.equals("officerretraining.OfficerRetrainingPlugin")) {
+                    return super.loadClass(name, resolve);
+                }
                 return this.findClass(name);
             }
             return super.loadClass(name, resolve);
