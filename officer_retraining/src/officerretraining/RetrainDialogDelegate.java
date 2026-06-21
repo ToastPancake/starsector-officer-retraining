@@ -96,13 +96,15 @@ public class RetrainDialogDelegate {
         final boolean canAfford = Global.getSector().getPlayerFleet().getCargo().getCredits().get() >= creditsCost && 
                                   Global.getSector().getPlayerStats().getStoryPoints() >= spCost;
 
+        float innerWidth = width - 20f;
+        
         float btnWidth = 110f;
         float btnHeight = 30f;
         float padding = 5f;
         float totalWidth = (btnWidth * personalities.length) + (padding * (personalities.length - 1));
-        float startX = (width - totalWidth) / 2f;
+        float startX = (innerWidth - totalWidth) / 2f;
 
-        CustomPanelAPI rowPanel = Global.getSettings().createCustom(width, 60f, null);
+        CustomPanelAPI rowPanel = Global.getSettings().createCustom(innerWidth, 60f, null);
         
         final List<ButtonAPI> checkboxes = new ArrayList<>();
         final ButtonAPI[] confirmBtnRef = new ButtonAPI[1];
@@ -153,7 +155,7 @@ public class RetrainDialogDelegate {
         
         info.addSpacer(20f);
         
-        CustomPanelAPI buttonRow = Global.getSettings().createCustom(width, 30f, null);
+        CustomPanelAPI buttonRow = Global.getSettings().createCustom(innerWidth, 30f, null);
         
         TooltipMakerAPI confirmCell = buttonRow.createUIElement(100f, 30f, false);
         ButtonAPI confirmBtn = confirmCell.addButton("Confirm", "confirm", 100f, 30f, 0f);
@@ -172,7 +174,7 @@ public class RetrainDialogDelegate {
                 }
             }
         });
-        buttonRow.addUIElement(confirmCell).inTL((width / 2f) - 110f, 0f);
+        buttonRow.addUIElement(confirmCell).inTL((innerWidth / 2f) - 105f, 0f);
 
         TooltipMakerAPI cancelCell = buttonRow.createUIElement(100f, 30f, false);
         ButtonAPI cancelBtn = cancelCell.addButton("Cancel", "cancel", 100f, 30f, 0f);
@@ -182,7 +184,7 @@ public class RetrainDialogDelegate {
                 dismissDialog();
             } 
         });
-        buttonRow.addUIElement(cancelCell).inTL((width / 2f) + 10f, 0f);
+        buttonRow.addUIElement(cancelCell).inTL((innerWidth / 2f) + 5f, 0f);
         
         info.addCustom(buttonRow, 0f);
 
