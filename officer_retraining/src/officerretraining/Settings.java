@@ -21,5 +21,13 @@ public class Settings {
         } catch (Exception e) {
             Global.getLogger(Settings.class).error("Failed to load officer_retraining_settings.json", e);
         }
+        
+        if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
+            try {
+                LunaWrapper.applyLunaSettings();
+            } catch (Exception e) {
+                Global.getLogger(Settings.class).error("Failed to load LunaLib settings", e);
+            }
+        }
     }
 }

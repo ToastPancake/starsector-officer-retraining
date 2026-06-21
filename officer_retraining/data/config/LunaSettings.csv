@@ -1,0 +1,6 @@
+modID,fieldID,fieldName,fieldType,defaultValue,secondaryValue,fieldDescription,minValue,maxValue,tab
+officer_retraining,creditsCost,Credits Cost,Int,10000,,Base credit cost for retraining an officer.,0,10000000,
+officer_retraining,storyPointsCost,Story Points Cost,Int,0,,Base story point cost for retraining an officer.,0,100,
+officer_retraining,levelScalingMultiplier,Level Scaling Multiplier,Double,0.0,,Cost multiplier based on the officer's level.,0.0,100.0,
+officer_retraining,stepScalingMultiplier,Distance Scaling Multiplier,Double,0.0,,Cost multiplier based on the distance between current and target personality.,0.0,100.0,
+officer_retraining,unlocksPersonalityPermanently,Unlock Personalities Permanently,Boolean,false,,If enabled purchasing a personality will permanently unlock it for that officer for free switches.,,,

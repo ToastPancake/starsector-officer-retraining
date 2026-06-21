@@ -12,6 +12,10 @@ public class OfficerRetrainingPlugin extends BaseModPlugin {
     @Override
     public void onApplicationLoad() throws Exception {
         Settings.loadSettings();
+        
+        if (Global.getSettings().getModManager().isModEnabled("lunalib")) {
+            LunaWrapper.init();
+        }
     }
     
     @Override
