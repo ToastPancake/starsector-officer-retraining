@@ -112,6 +112,10 @@ public class RetrainDialogDelegate {
         final List<ButtonAPI> checkboxes = new ArrayList<>();
         final ButtonAPI[] confirmBtnRef = new ButtonAPI[1];
         final String currentPersonality = officer.getPersonalityAPI().getId();
+        
+        if (Settings.unlocksPersonalityPermanently) {
+            officer.getMemoryWithoutUpdate().set("$officer_retraining_unlocked_" + currentPersonality, true);
+        }
 
         for (int i = 0; i < personalities.length; i++) {
             final String pId = personalities[i];
@@ -143,6 +147,11 @@ public class RetrainDialogDelegate {
                         
                         finalCreditsCost[0] = baseCreditsCost + (int) (Settings.creditsCost * Settings.stepScalingMultiplier * steps);
                         finalSpCost[0] = baseSpCost + (int) (Settings.storyPointsCost * Settings.stepScalingMultiplier * steps);
+                        
+                        if (Settings.unlocksPersonalityPermanently && officer.getMemoryWithoutUpdate().getBoolean("$officer_retraining_unlocked_" + pId)) {
+                            finalCreditsCost[0] = 0;
+                            finalSpCost[0] = 0;
+                        }
                         
                         boolean canAfford = Global.getSector().getPlayerFleet().getCargo().getCredits().get() >= finalCreditsCost[0] && 
                                             Global.getSector().getPlayerStats().getStoryPoints() >= finalSpCost[0];
@@ -185,6 +194,9 @@ public class RetrainDialogDelegate {
                         Global.getSector().getPlayerStats().spendStoryPoints(finalSpCost[0], false, (com.fs.starfarer.api.campaign.TextPanelAPI) null, false, "Officer personality retrained");
                     }
                     officer.setPersonality(selectedPersonality);
+                    if (Settings.unlocksPersonalityPermanently) {
+                        officer.getMemoryWithoutUpdate().set("$officer_retraining_unlocked_" + selectedPersonality, true);
+                    }
                     dismissDialog();
                 }
             }

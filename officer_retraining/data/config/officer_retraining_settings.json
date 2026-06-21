@@ -2,5 +2,6 @@
   "creditsCost": 10000,
   "storyPointsCost": 0,
   "levelScalingMultiplier": 0.0,
-  "stepScalingMultiplier": 0.0
+  "stepScalingMultiplier": 0.0,
+  "unlocksPersonalityPermanently": false
 }

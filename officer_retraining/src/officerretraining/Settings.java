@@ -8,6 +8,7 @@ public class Settings {
     public static int storyPointsCost = 0;
     public static float levelScalingMultiplier = 0.0f;
     public static float stepScalingMultiplier = 0.0f;
+    public static boolean unlocksPersonalityPermanently = false;
 
     public static void loadSettings() {
         try {
@@ -16,6 +17,7 @@ public class Settings {
             storyPointsCost = settings.optInt("storyPointsCost", 0);
             levelScalingMultiplier = (float) settings.optDouble("levelScalingMultiplier", 0.0);
             stepScalingMultiplier = (float) settings.optDouble("stepScalingMultiplier", 0.0);
+            unlocksPersonalityPermanently = settings.optBoolean("unlocksPersonalityPermanently", false);
         } catch (Exception e) {
             Global.getLogger(Settings.class).error("Failed to load officer_retraining_settings.json", e);
         }
