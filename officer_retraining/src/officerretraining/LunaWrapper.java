@@ -10,29 +10,38 @@ public class LunaWrapper implements LunaSettingsListener {
     }
 
     public static void applyLunaSettings() {
-        Integer credits = LunaSettings.getInt("officer_retraining", "creditsCost");
-        if (credits != null) {
-            Settings.creditsCost = credits;
-        }
+        try {
+            Integer credits = LunaSettings.getInt("officer_retraining", "creditsCost");
+            com.fs.starfarer.api.Global.getLogger(LunaWrapper.class).info("LunaLib creditsCost: " + credits);
+            if (credits != null) {
+                Settings.creditsCost = credits;
+            }
 
-        Integer sp = LunaSettings.getInt("officer_retraining", "storyPointsCost");
-        if (sp != null) {
-            Settings.storyPointsCost = sp;
-        }
-        
-        Double levelScaling = LunaSettings.getDouble("officer_retraining", "levelScalingMultiplier");
-        if (levelScaling != null) {
-            Settings.levelScalingMultiplier = levelScaling.floatValue();
-        }
-        
-        Double stepScaling = LunaSettings.getDouble("officer_retraining", "stepScalingMultiplier");
-        if (stepScaling != null) {
-            Settings.stepScalingMultiplier = stepScaling.floatValue();
-        }
-        
-        Boolean unlocks = LunaSettings.getBoolean("officer_retraining", "unlocksPersonalityPermanently");
-        if (unlocks != null) {
-            Settings.unlocksPersonalityPermanently = unlocks;
+            Integer sp = LunaSettings.getInt("officer_retraining", "storyPointsCost");
+            com.fs.starfarer.api.Global.getLogger(LunaWrapper.class).info("LunaLib storyPointsCost: " + sp);
+            if (sp != null) {
+                Settings.storyPointsCost = sp;
+            }
+            
+            Double levelScaling = LunaSettings.getDouble("officer_retraining", "levelScalingMultiplier");
+            com.fs.starfarer.api.Global.getLogger(LunaWrapper.class).info("LunaLib levelScalingMultiplier: " + levelScaling);
+            if (levelScaling != null) {
+                Settings.levelScalingMultiplier = levelScaling.floatValue();
+            }
+            
+            Double stepScaling = LunaSettings.getDouble("officer_retraining", "stepScalingMultiplier");
+            com.fs.starfarer.api.Global.getLogger(LunaWrapper.class).info("LunaLib stepScalingMultiplier: " + stepScaling);
+            if (stepScaling != null) {
+                Settings.stepScalingMultiplier = stepScaling.floatValue();
+            }
+            
+            Boolean unlocks = LunaSettings.getBoolean("officer_retraining", "unlocksPersonalityPermanently");
+            com.fs.starfarer.api.Global.getLogger(LunaWrapper.class).info("LunaLib unlocksPersonalityPermanently: " + unlocks);
+            if (unlocks != null) {
+                Settings.unlocksPersonalityPermanently = unlocks;
+            }
+        } catch (Throwable t) {
+            com.fs.starfarer.api.Global.getLogger(LunaWrapper.class).error("Error applying LunaLib settings", t);
         }
     }
 
