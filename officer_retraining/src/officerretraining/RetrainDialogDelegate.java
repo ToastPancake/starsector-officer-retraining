@@ -4,14 +4,19 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.characters.PersonAPI;
 import com.fs.starfarer.api.ui.ButtonAPI;
 import com.fs.starfarer.api.ui.CustomPanelAPI;
+import com.fs.starfarer.api.ui.LabelAPI;
 import com.fs.starfarer.api.ui.TooltipMakerAPI;
 import com.fs.starfarer.api.ui.UIPanelAPI;
 import com.fs.starfarer.api.util.Misc;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RetrainDialogDelegate {
     private final PersonAPI officer;
     private final Object confirmDialog;
     private static Class<?> actionListenerInterface = null;
+    private String selectedPersonality = null;
 
     public RetrainDialogDelegate(PersonAPI officer, Object confirmDialog) {
         this.officer = officer;
@@ -75,22 +80,14 @@ public class RetrainDialogDelegate {
         info.addSpacer(10f);
 
         int level = officer.getStats().getLevel();
-        int creditsCost = Settings.creditsCost + (int) (Settings.creditsCost * Settings.levelScalingMultiplier * level);
-        int spCost = Settings.storyPointsCost + (int) (Settings.storyPointsCost * Settings.levelScalingMultiplier * level);
+        final int creditsCost = Settings.creditsCost + (int) (Settings.creditsCost * Settings.levelScalingMultiplier * level);
+        final int spCost = Settings.storyPointsCost + (int) (Settings.storyPointsCost * Settings.levelScalingMultiplier * level);
 
-        info.addPara("Retraining will change the officer's combat personality. This action will cost:", 0f);
-        info.addSpacer(5f);
-        if (creditsCost > 0) {
-            info.addPara("Credits: " + Misc.getDGSCredits(creditsCost), 0f, Misc.getHighlightColor(), Misc.getDGSCredits(creditsCost));
-        } else {
-            info.addPara("Credits: Free", 0f, Misc.getHighlightColor(), "Free");
-        }
-        
-        if (spCost > 0) {
-            info.addPara("Story Points: " + spCost, 0f, Misc.getStoryOptionColor(), String.valueOf(spCost));
-        } else {
-            info.addPara("Story Points: Free", 0f, Misc.getStoryOptionColor(), "Free");
-        }
+        info.addPara("Retraining will change the officer's combat personality. Select a new personality to preview costs.", 0f);
+        info.addSpacer(15f);
+
+        final LabelAPI costLabelCredits = info.addPara("Credits: -", 0f);
+        final LabelAPI costLabelSp = info.addPara("Story Points: -", 0f);
         
         info.addSpacer(20f);
 
@@ -108,6 +105,9 @@ public class RetrainDialogDelegate {
 
         CustomPanelAPI rowPanel = Global.getSettings().createCustom(width, 60f, null);
         
+        final List<ButtonAPI> checkboxes = new ArrayList<>();
+        final ButtonAPI[] confirmBtnRef = new ButtonAPI[1];
+
         for (int i = 0; i < personalities.length; i++) {
             final String pId = personalities[i];
             String pName = displayNames[i];
@@ -115,7 +115,8 @@ public class RetrainDialogDelegate {
             boolean isCurrent = officer.getPersonalityAPI().getId().equals(pId);
             
             TooltipMakerAPI cell = rowPanel.createUIElement(btnWidth, 60f, false);
-            ButtonAPI btn = cell.addButton(pName, pId, btnWidth, btnHeight, 0f);
+            final ButtonAPI btn = cell.addAreaCheckbox(pName, pId, Misc.getBasePlayerColor(), Misc.getDarkPlayerColor(), Misc.getBrightPlayerColor(), btnWidth, btnHeight, 0f);
+            checkboxes.add(btn);
             
             if (isCurrent) {
                 btn.setEnabled(false);
@@ -123,16 +124,26 @@ public class RetrainDialogDelegate {
             } else if (!canAfford) {
                 btn.setEnabled(false);
             } else {
-                final int finalCreditsCost = creditsCost;
-                final int finalSpCost = spCost;
                 attachListener(btn, new Runnable() {
                     @Override
                     public void run() {
-                        Global.getSector().getPlayerFleet().getCargo().getCredits().subtract(finalCreditsCost);
-                        if (finalSpCost > 0) {
-                            Global.getSector().getPlayerStats().spendStoryPoints(finalSpCost, false, (com.fs.starfarer.api.campaign.TextPanelAPI) null, false, "Officer personality retrained");
+                        for (ButtonAPI cb : checkboxes) {
+                            if (cb != btn) cb.setChecked(false);
                         }
-                        officer.setPersonality(pId);
+                        btn.setChecked(true);
+                        selectedPersonality = pId;
+                        
+                        costLabelCredits.setText("Credits: " + (creditsCost > 0 ? Misc.getDGSCredits(creditsCost) : "Free"));
+                        if (creditsCost > 0) costLabelCredits.setHighlightColors(Misc.getHighlightColor());
+                        if (creditsCost > 0) costLabelCredits.setHighlight(Misc.getDGSCredits(creditsCost));
+
+                        costLabelSp.setText("Story Points: " + (spCost > 0 ? String.valueOf(spCost) : "Free"));
+                        if (spCost > 0) costLabelSp.setHighlightColors(Misc.getStoryOptionColor());
+                        if (spCost > 0) costLabelSp.setHighlight(String.valueOf(spCost));
+
+                        if (confirmBtnRef[0] != null) {
+                            confirmBtnRef[0].setEnabled(true);
+                        }
                     }
                 });
             }
@@ -143,15 +154,38 @@ public class RetrainDialogDelegate {
         
         info.addSpacer(20f);
         
-        CustomPanelAPI cancelRow = Global.getSettings().createCustom(width, 30f, null);
-        TooltipMakerAPI cancelCell = cancelRow.createUIElement(100f, 30f, false);
+        CustomPanelAPI buttonRow = Global.getSettings().createCustom(width, 30f, null);
+        
+        TooltipMakerAPI confirmCell = buttonRow.createUIElement(100f, 30f, false);
+        ButtonAPI confirmBtn = confirmCell.addButton("Confirm", "confirm", 100f, 30f, 0f);
+        confirmBtn.setEnabled(false);
+        confirmBtnRef[0] = confirmBtn;
+        attachListener(confirmBtn, new Runnable() {
+            @Override
+            public void run() {
+                if (selectedPersonality != null && canAfford) {
+                    Global.getSector().getPlayerFleet().getCargo().getCredits().subtract(creditsCost);
+                    if (spCost > 0) {
+                        Global.getSector().getPlayerStats().spendStoryPoints(spCost, false, (com.fs.starfarer.api.campaign.TextPanelAPI) null, false, "Officer personality retrained");
+                    }
+                    officer.setPersonality(selectedPersonality);
+                    dismissDialog();
+                }
+            }
+        });
+        buttonRow.addUIElement(confirmCell).inTL((width / 2f) - 110f, 0f);
+
+        TooltipMakerAPI cancelCell = buttonRow.createUIElement(100f, 30f, false);
         ButtonAPI cancelBtn = cancelCell.addButton("Cancel", "cancel", 100f, 30f, 0f);
         attachListener(cancelBtn, new Runnable() {
             @Override
-            public void run() {} 
+            public void run() {
+                dismissDialog();
+            } 
         });
-        cancelRow.addUIElement(cancelCell).inTL((width - 100f) / 2f, 0f);
-        info.addCustom(cancelRow, 0f);
+        buttonRow.addUIElement(cancelCell).inTL((width / 2f) + 10f, 0f);
+        
+        info.addCustom(buttonRow, 0f);
 
         panel.addUIElement(info).inTL(0, 0);
         innerPanel.addComponent(panel).inTL(0, 0);

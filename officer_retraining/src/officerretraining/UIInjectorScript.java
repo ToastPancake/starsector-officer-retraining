@@ -236,7 +236,7 @@ public class UIInjectorScript implements EveryFrameScript {
             }
 
             final Object confirmDialog = cons.newInstance(
-                400f, 350f, screenPanel, proxy, "", new String[]{} 
+                600f, 300f, screenPanel, proxy, "", new String[]{} 
             );
 
             java.lang.reflect.Method show = confirmDialog.getClass().getMethod("show", Float.TYPE, Float.TYPE);
