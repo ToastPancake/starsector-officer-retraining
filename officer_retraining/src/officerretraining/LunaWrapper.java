@@ -10,8 +10,15 @@ public class LunaWrapper implements LunaSettingsListener {
     }
 
     public static void applyLunaSettings() {
-        Settings.creditsCost = LunaSettings.getInt("officer_retraining", "creditsCost");
-        Settings.storyPointsCost = LunaSettings.getInt("officer_retraining", "storyPointsCost");
+        Integer credits = LunaSettings.getInt("officer_retraining", "creditsCost");
+        if (credits != null) {
+            Settings.creditsCost = credits;
+        }
+
+        Integer sp = LunaSettings.getInt("officer_retraining", "storyPointsCost");
+        if (sp != null) {
+            Settings.storyPointsCost = sp;
+        }
         
         Double levelScaling = LunaSettings.getDouble("officer_retraining", "levelScalingMultiplier");
         if (levelScaling != null) {
@@ -31,8 +38,6 @@ public class LunaWrapper implements LunaSettingsListener {
 
     @Override
     public void settingsChanged(String modID) {
-        if ("officer_retraining".equals(modID)) {
-            applyLunaSettings();
-        }
+        applyLunaSettings();
     }
 }
