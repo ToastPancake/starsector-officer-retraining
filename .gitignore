@@ -1,5 +1,17 @@
-/jars/bin/
-*.class
-*.log
-OfficerExtension_decompiled.txt
+# IDE
 .vscode/
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Compilation
+jars/bin/
+*.class
+
+# Mod Specific
+# Exclude the actual compiled mod jar? No, we usually track it for Starsector mods so users can download it directly.
+
+# Temporary
+events.json
+parse.py
