@@ -18,7 +18,7 @@ import com.fs.starfarer.api.campaign.InteractionDialogAPI;
 
 public class UIInjectorScript implements EveryFrameScript {
     private Object lastCpdRef = null;
-    private final Map<Object, ButtonAPI> injectedPanels = new HashMap<>();
+    private final Map<Object, CustomPanelAPI> injectedPanels = new HashMap<>();
     private static Class<?> actionListenerInterface = null;
 
     @Override
@@ -33,8 +33,7 @@ public class UIInjectorScript implements EveryFrameScript {
 
     private boolean dumped = false;
 
-    private float scanTimer = 0f;
-
+    private int lastCaptainDialogIndex = -1;
     private boolean f11Pressed = false;
 
     @Override
@@ -53,15 +52,9 @@ public class UIInjectorScript implements EveryFrameScript {
             f11Pressed = false;
         }
 
-        UIPanelAPI core = UtilReflection.getCoreUI();
-        if (core == null) return;
-
-        // Clean up un-checked panels is no longer needed using ActionListener
-
-        scanTimer += amount;
-        if (scanTimer >= 0.2f) {
-            scanTimer = 0f;
-            findAndInject(core);
+        Object cpd = findCaptainPickerDialog();
+        if (cpd != null) {
+            injectCaptainPickerDialog(cpd);
         }
     }
 
@@ -154,50 +147,58 @@ public class UIInjectorScript implements EveryFrameScript {
         return null;
     }
 
-    private void findAndInject(Object comp) {
-        if (comp == null) return;
+    private Object findCaptainPickerDialog() {
+        UIPanelAPI core = UtilReflection.getCoreUI();
+        if (core == null) return null;
+        List<?> items = (List<?>) UtilReflection.invokeGetter(core, "getChildrenNonCopy");
+        if (items != null && !items.isEmpty()) {
+            if (lastCaptainDialogIndex >= 0 && 
+                lastCaptainDialogIndex < items.size() && 
+                items.get(lastCaptainDialogIndex).getClass().getName().equals("com.fs.starfarer.coreui.CaptainPickerDialog")) {
+                return items.get(lastCaptainDialogIndex);
+            }
+            for (int i = 0; i < items.size(); i++) {
+                Object component = items.get(i);
+                if (component.getClass().getName().equals("com.fs.starfarer.coreui.CaptainPickerDialog")) {
+                    lastCaptainDialogIndex = i;
+                    return component;
+                }
+            }
+        }
+        return null;
+    }
 
-        if (comp.getClass().getName().equals("com.fs.starfarer.coreui.CaptainPickerDialog")) {
-            Global.getLogger(UIInjectorScript.class).info("FOUND CaptainPickerDialog in findAndInject!");
-            Object listOfficers = UtilReflection.invokeGetter(comp, "getListOfficers");
-            if (listOfficers != null) {
-                List<?> items = (List<?>) UtilReflection.invokeGetter(listOfficers, "getItems");
-                if (items != null) {
-                    Global.getLogger(UIInjectorScript.class).info("listOfficers items size: " + items.size());
-                    for (Object item : items) {
-                        findAndInject(item);
+    private void injectCaptainPickerDialog(Object cpd) {
+        Object listOfficers = UtilReflection.invokeGetter(cpd, "getListOfficers");
+        if (listOfficers != null) {
+            List<?> items = (List<?>) UtilReflection.invokeGetter(listOfficers, "getItems");
+            if (items != null) {
+                for (Object item : items) {
+                    if (item instanceof UIComponentAPI) {
+                        UIComponentAPI uiComp = (UIComponentAPI) item;
+                        PersonAPI person = getPersonFromComponent(uiComp);
+                        if (person != null && !person.isPlayer() && !person.isAICore()) {
+                            LabelAPI statusLabel = findPersonalityLabel(uiComp, person.getPersonalityAPI().getDisplayName());
+                            if (statusLabel != null) {
+                                boolean needsInjection = true;
+                                if (injectedPanels.containsKey(uiComp)) {
+                                    CustomPanelAPI panel = injectedPanels.get(uiComp);
+                                    if (uiComp instanceof UIPanelAPI) {
+                                        List<?> children = (List<?>) UtilReflection.invokeGetter(uiComp, "getChildrenNonCopy");
+                                        if (children != null && children.contains(panel)) {
+                                            needsInjection = false;
+                                        }
+                                    } else {
+                                        needsInjection = false; 
+                                    }
+                                }
+                                
+                                if (needsInjection) {
+                                    inject(uiComp, person, statusLabel);
+                                }
+                            }
+                        }
                     }
-                } else {
-                    Global.getLogger(UIInjectorScript.class).info("listOfficers items returned NULL");
-                }
-            } else {
-                Global.getLogger(UIInjectorScript.class).info("getListOfficers returned NULL");
-            }
-            return;
-        }
-
-        if (!(comp instanceof UIComponentAPI)) return;
-        UIComponentAPI uiComp = (UIComponentAPI) comp;
-
-        PersonAPI person = getPersonFromComponent(uiComp);
-
-        if (person != null && !person.isPlayer() && !person.isAICore()) {
-            LabelAPI statusLabel = findPersonalityLabel(uiComp, person.getPersonalityAPI().getDisplayName());
-            if (statusLabel != null) {
-                if (!injectedPanels.containsKey(uiComp)) {
-                    inject(uiComp, person, statusLabel);
-                }
-                return; // Found row, no need to recurse
-            }
-        }
-        
-        // Recurse
-        if (uiComp instanceof UIPanelAPI) {
-            List<?> children = (List<?>) UtilReflection.invokeGetter(uiComp, "getChildrenNonCopy");
-            if (children != null) {
-                Object[] childrenArray = children.toArray();
-                for (Object child : childrenArray) {
-                    findAndInject(child);
                 }
             }
         }
@@ -326,7 +327,7 @@ public class UIInjectorScript implements EveryFrameScript {
             // Anchor it to the Top Right, to the left of the salary and below the level up button
             dummyPanel.getPosition().inTR(160f, 35f);
             
-            injectedPanels.put(elem, button);
+            injectedPanels.put(elem, dummyPanel);
         } catch (Exception e) {
             Global.getLogger(UIInjectorScript.class).error("Error injecting UI", e);
         }
