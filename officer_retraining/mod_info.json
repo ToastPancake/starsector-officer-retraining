@@ -1,0 +1,12 @@
+{
+    "id":"officer_retraining",
+    "name":"Officer Personality Retraining",
+    "author":"Antigravity",
+    "version":"1.0.0",
+    "description":"Allows players to retrain officer personalities via the officer screen.",
+    "gameVersion":"0.98a-RC8",
+    "modPlugin":"officerretraining.OfficerRetrainingPlugin",
+    "jars":["jars/officer_retraining.jar"],
+    "dependencies": [
+    ]
+}

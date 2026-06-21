@@ -1,0 +1,5 @@
+/jars/bin/
+*.class
+*.log
+OfficerExtension_decompiled.txt
+.vscode/
