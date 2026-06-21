@@ -10,6 +10,7 @@ import com.fs.starfarer.api.ui.UIPanelAPI;
 import com.fs.starfarer.api.util.Misc;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RetrainDialogDelegate {
@@ -17,6 +18,8 @@ public class RetrainDialogDelegate {
     private final Object confirmDialog;
     private static Class<?> actionListenerInterface = null;
     private String selectedPersonality = null;
+    
+    private static final List<String> PERSONALITY_ORDER = Arrays.asList("timid", "cautious", "steady", "aggressive", "reckless");
 
     public RetrainDialogDelegate(PersonAPI officer, Object confirmDialog) {
         this.officer = officer;
@@ -79,8 +82,11 @@ public class RetrainDialogDelegate {
         info.addSpacer(10f);
 
         int level = officer.getStats().getLevel();
-        final int creditsCost = Settings.creditsCost + (int) (Settings.creditsCost * Settings.levelScalingMultiplier * level);
-        final int spCost = Settings.storyPointsCost + (int) (Settings.storyPointsCost * Settings.levelScalingMultiplier * level);
+        final int baseCreditsCost = Settings.creditsCost + (int) (Settings.creditsCost * Settings.levelScalingMultiplier * level);
+        final int baseSpCost = Settings.storyPointsCost + (int) (Settings.storyPointsCost * Settings.levelScalingMultiplier * level);
+        
+        final int[] finalCreditsCost = new int[1];
+        final int[] finalSpCost = new int[1];
 
         info.addPara("Retraining will change the officer's combat personality. Select a new personality to preview costs.", 0f);
         info.addSpacer(15f);
@@ -92,9 +98,6 @@ public class RetrainDialogDelegate {
 
         String[] personalities = {"timid", "cautious", "steady", "aggressive", "reckless"};
         String[] displayNames = {"Timid", "Cautious", "Steady", "Aggressive", "Reckless"};
-
-        final boolean canAfford = Global.getSector().getPlayerFleet().getCargo().getCredits().get() >= creditsCost && 
-                                  Global.getSector().getPlayerStats().getStoryPoints() >= spCost;
 
         float innerWidth = width - 20f;
         
@@ -108,12 +111,13 @@ public class RetrainDialogDelegate {
         
         final List<ButtonAPI> checkboxes = new ArrayList<>();
         final ButtonAPI[] confirmBtnRef = new ButtonAPI[1];
+        final String currentPersonality = officer.getPersonalityAPI().getId();
 
         for (int i = 0; i < personalities.length; i++) {
             final String pId = personalities[i];
             String pName = displayNames[i];
 
-            boolean isCurrent = officer.getPersonalityAPI().getId().equals(pId);
+            boolean isCurrent = currentPersonality.equals(pId);
             
             TooltipMakerAPI cell = rowPanel.createUIElement(btnWidth, 60f, false);
             final ButtonAPI btn = cell.addAreaCheckbox(pName, pId, Misc.getBasePlayerColor(), Misc.getDarkPlayerColor(), Misc.getBrightPlayerColor(), btnWidth, btnHeight, 0f);
@@ -122,8 +126,6 @@ public class RetrainDialogDelegate {
             if (isCurrent) {
                 btn.setEnabled(false);
                 cell.addPara("Current", Misc.getGrayColor(), 0f).setAlignment(com.fs.starfarer.api.ui.Alignment.MID);
-            } else if (!canAfford) {
-                btn.setEnabled(false);
             } else {
                 attachListener(btn, new Runnable() {
                     @Override
@@ -134,16 +136,29 @@ public class RetrainDialogDelegate {
                         btn.setChecked(true);
                         selectedPersonality = pId;
                         
-                        costLabelCredits.setText("Credits: " + (creditsCost > 0 ? Misc.getDGSCredits(creditsCost) : "Free"));
-                        if (creditsCost > 0) costLabelCredits.setHighlightColors(Misc.getHighlightColor());
-                        if (creditsCost > 0) costLabelCredits.setHighlight(Misc.getDGSCredits(creditsCost));
+                        int steps = 0;
+                        if (PERSONALITY_ORDER.contains(currentPersonality) && PERSONALITY_ORDER.contains(pId)) {
+                            steps = Math.abs(PERSONALITY_ORDER.indexOf(pId) - PERSONALITY_ORDER.indexOf(currentPersonality));
+                        }
+                        
+                        finalCreditsCost[0] = baseCreditsCost + (int) (Settings.creditsCost * Settings.stepScalingMultiplier * steps);
+                        finalSpCost[0] = baseSpCost + (int) (Settings.storyPointsCost * Settings.stepScalingMultiplier * steps);
+                        
+                        boolean canAfford = Global.getSector().getPlayerFleet().getCargo().getCredits().get() >= finalCreditsCost[0] && 
+                                            Global.getSector().getPlayerStats().getStoryPoints() >= finalSpCost[0];
+                        
+                        String creditsText = finalCreditsCost[0] > 0 ? Misc.getDGSCredits(finalCreditsCost[0]) : "Free";
+                        costLabelCredits.setText("Credits: " + creditsText);
+                        costLabelCredits.setHighlightColors(Misc.getHighlightColor());
+                        costLabelCredits.setHighlight(creditsText);
 
-                        costLabelSp.setText("Story Points: " + (spCost > 0 ? String.valueOf(spCost) : "Free"));
-                        if (spCost > 0) costLabelSp.setHighlightColors(Misc.getStoryOptionColor());
-                        if (spCost > 0) costLabelSp.setHighlight(String.valueOf(spCost));
+                        String spText = finalSpCost[0] > 0 ? String.valueOf(finalSpCost[0]) : "Free";
+                        costLabelSp.setText("Story Points: " + spText);
+                        costLabelSp.setHighlightColors(Misc.getStoryOptionColor());
+                        costLabelSp.setHighlight(spText);
 
                         if (confirmBtnRef[0] != null) {
-                            confirmBtnRef[0].setEnabled(true);
+                            confirmBtnRef[0].setEnabled(canAfford);
                         }
                     }
                 });
@@ -164,10 +179,10 @@ public class RetrainDialogDelegate {
         attachListener(confirmBtn, new Runnable() {
             @Override
             public void run() {
-                if (selectedPersonality != null && canAfford) {
-                    Global.getSector().getPlayerFleet().getCargo().getCredits().subtract(creditsCost);
-                    if (spCost > 0) {
-                        Global.getSector().getPlayerStats().spendStoryPoints(spCost, false, (com.fs.starfarer.api.campaign.TextPanelAPI) null, false, "Officer personality retrained");
+                if (selectedPersonality != null) {
+                    Global.getSector().getPlayerFleet().getCargo().getCredits().subtract(finalCreditsCost[0]);
+                    if (finalSpCost[0] > 0) {
+                        Global.getSector().getPlayerStats().spendStoryPoints(finalSpCost[0], false, (com.fs.starfarer.api.campaign.TextPanelAPI) null, false, "Officer personality retrained");
                     }
                     officer.setPersonality(selectedPersonality);
                     dismissDialog();
