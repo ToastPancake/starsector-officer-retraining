@@ -323,13 +323,8 @@ public class UIInjectorScript implements EveryFrameScript {
                 return;
             }
             
-            float textWidth = statusLabel.computeTextWidth(statusLabel.getText());
-            float dx = statusLabel.getPosition().getX() - elem.getPosition().getX() + textWidth + 10f;
-            float dy = (elem.getPosition().getY() + elem.getPosition().getHeight()) - (statusLabel.getPosition().getY() + statusLabel.getPosition().getHeight());
-            
-            dy -= 2f; 
-            
-            dummyPanel.getPosition().inTL(dx, dy);
+            // Anchor it to the Top Right, to the left of the salary and below the level up button
+            dummyPanel.getPosition().inTR(160f, 35f);
             
             injectedPanels.put(elem, button);
         } catch (Exception e) {
