@@ -1,7 +1,7 @@
 {
     "id":"officer_retraining",
     "name":"Officer Personality Retraining",
-    "author":"Antigravity",
+    "author":"ToastPancake (based on work by this_is_a_username)",
     "version":"1.0.0",
     "description":"Allows players to retrain officer personalities via the officer screen.",
     "gameVersion":"0.98a-RC8",
